@@ -19,8 +19,8 @@ void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentYaw = InitialYaw = GetOwner()->GetActorRotation().Yaw;
-	TargetYaw += InitialYaw;
-	InitialTargetYaw = TargetYaw;
+	OpenAngle += InitialYaw;
+
 	if (PressurePlate == NULL)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has the open door component on it, but no pressurplate set!"), *GetOwner()->GetName())
@@ -34,22 +34,34 @@ void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompon
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
-	if (PressurePlate != NULL && PressurePlate->IsOverlappingActor(ActorThatOpens))
+	if (PressurePlate != NULL)
 	{
-		TargetYaw = InitialTargetYaw;
-		OpenDoor(DeltaTime);
-	}
-	else if (CurrentYaw != InitialYaw && !PressurePlate->IsOverlappingActor(ActorThatOpens))
-	{
-		TargetYaw = InitialYaw;
-		OpenDoor(DeltaTime);
+		if (PressurePlate->IsOverlappingActor(ActorThatOpens))
+		{
+			OpenDoor(DeltaTime);
+			DoorLastOpened = GetWorld()->GetTimeSeconds();
+		}
+		else
+		{
+			float TimePassed = GetWorld()->GetTimeSeconds() - DoorLastOpened;
+			if (TimePassed >= DoorCloseDelay)
+				CloseDoor(DeltaTime);
+		}
 	}
 }
 
 void UOpenDoor::OpenDoor(float DeltaTime)
 {
 	FRotator DoorRotation = GetOwner()->GetActorRotation();
-	CurrentYaw = FMath::FInterpTo(CurrentYaw, TargetYaw, DeltaTime, 1.f);
+	CurrentYaw = FMath::FInterpTo(CurrentYaw, OpenAngle, DeltaTime, DoorOpenSpeed);
+	DoorRotation.Yaw = CurrentYaw;
+	GetOwner()->SetActorRotation(DoorRotation);
+}
+
+void UOpenDoor::CloseDoor(float DeltaTime)
+{
+	FRotator DoorRotation = GetOwner()->GetActorRotation();
+	CurrentYaw = FMath::FInterpTo(CurrentYaw, InitialYaw, DeltaTime, DoorCloseSpeed);
 	DoorRotation.Yaw = CurrentYaw;
 	GetOwner()->SetActorRotation(DoorRotation);
 }
