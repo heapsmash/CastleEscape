@@ -27,7 +27,7 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 	// If the physics handle is attached.
 	if (!PhysicsHandle)
 	{
-		return
+		return;
 	}
 
 	if (PhysicsHandle->GrabbedComponent)
@@ -42,7 +42,7 @@ void UGrabber::SetupInputComponent(void)
 	InputComponent = GetOwner()->FindComponentByClass<UInputComponent>();
 	if (InputComponent)
 	{
-		UE_LOG(LogTemp, Error, TEXT("Found Input Component"));
+		// UE_LOG(LogTemp, Error, TEXT("Found Input Component"));
 		InputComponent->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
 		InputComponent->BindAction("Grab", IE_Released, this, &UGrabber::Release);
 	}
@@ -68,7 +68,7 @@ void UGrabber::Grab(void)
 	{
 		if (!PhysicsHandle)
 		{
-			return
+			return;
 		}
 
 		PhysicsHandle->GrabComponentAtLocation(
@@ -82,7 +82,7 @@ void UGrabber::Release(void)
 {
 	if (!PhysicsHandle)
 	{
-		return
+		return;
 	}
 	PhysicsHandle->ReleaseComponent();
 }
