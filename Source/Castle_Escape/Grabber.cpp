@@ -21,10 +21,24 @@ UGrabber::UGrabber()
 void UGrabber::BeginPlay()
 {
 	Super::BeginPlay();
-	UE_LOG(LogTemp, Warning, TEXT("Grabber reporting for duty"));
+
+	// Check for Physics Handle Component
+	PhysicsHandle = GetOwner()->FindComponentByClass<UPhysicsHandleComponent>();
+	if (PhysicsHandle)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Found Physics Handle"));
+	}
+
+	InputComponent = GetOwner()->FindComponentByClass<UInputComponent>();
+	if(InputComponent)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Found Input Component"));
+		InputComponent->BindAction("Grab", IE_Pressed, this, &UGrabber::Grab);
+		InputComponent->BindAction("Grab", IE_Released, this, &UGrabber::Release);
+	}
 }
 
-// Callsed every frame
+// Called every frame
 void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
@@ -48,9 +62,33 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 		0,
 		5);
 
-	UE_LOG(LogTemp, Warning, TEXT("Location (%s) Rotation (%s)"),
-		   *PlayerViewPointLocation.ToString(),
-		   *PlayerViewPointRotation.ToString());
+	// UE_LOG(LogTemp, Warning, TEXT("Location (%s) Rotation (%s)"),
+	// 	   *PlayerViewPointLocation.ToString(),
+	// 	   *PlayerViewPointRotation.ToString());
 
-	// ...
+	FHitResult Hit;
+	FCollisionQueryParams TraceParams(FName(TEXT("")), false, GetOwner());
+
+	GetWorld()->LineTraceSingleByObjectType(
+		OUT Hit,
+		PlayerViewPointLocation,
+		LineTraceEnd,
+		FCollisionObjectQueryParams(ECollisionChannel::ECC_PhysicsBody),
+		TraceParams);
+
+	AActor *ActorHit = Hit.GetActor();
+	if (ActorHit != NULL)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Line trace has hit: %s"), *(ActorHit->GetName()));
+	}
+}
+
+void UGrabber::Grab(void)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Grabber Pressed")); 
+}
+
+void UGrabber::Release(void)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Grabber Released")); 
 }
