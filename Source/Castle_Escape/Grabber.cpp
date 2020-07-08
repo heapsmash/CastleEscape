@@ -1,9 +1,9 @@
 // Copyright Michael S. Walker 2020
 
+#include "Grabber.h"
 #include "DrawDebugHelpers.h"
 #include "Engine/World.h"
 #include "GameFramework/PlayerController.h"
-#include "Grabber.h"
 
 #define OUT
 
@@ -24,8 +24,22 @@ void UGrabber::TickComponent(float DeltaTime, ELevelTick TickType, FActorCompone
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
+
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation);
+
+	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
+
 	// If the physics handle is attached.
-	// Move the object that we are holding.
+	if (PhysicsHandle->GrabbedComponent)
+	{
+		// Move the object that we are holding.
+
+		PhysicsHandle->SetTargetLocation(LineTraceEnd);
+	}
 }
 
 void UGrabber::SetupInputComponent(void)
@@ -50,21 +64,32 @@ void UGrabber::FindPhysicsHandle(void)
 
 void UGrabber::Grab(void)
 {
-	// Online recast when key is pressed
-	// Try and reach any actors with a physics body collision channel set
+	FVector PlayerViewPointLocation;
+	FRotator PlayerViewPointRotation;
 
-	UE_LOG(LogTemp, Warning, TEXT("Grabber Pressed"));
+	GetWorld()->GetFirstPlayerController()->GetPlayerViewPoint(
+		OUT PlayerViewPointLocation,
+		OUT PlayerViewPointRotation);
 
-	GetFirstPhysicsBodyInReach();
+	FVector LineTraceEnd = PlayerViewPointLocation + PlayerViewPointRotation.Vector() * Reach;
+
+	FHitResult HitResult = GetFirstPhysicsBodyInReach();
+	UPrimitiveComponent *ComponentToGrab = HitResult.GetComponent();
+
 	// If we hit something then attach the physics handle
-
-	// TODO: Attach physics handle
+	if (HitResult.GetActor())
+	{
+		PhysicsHandle->GrabComponentAtLocation(
+			ComponentToGrab,
+			NAME_None,
+			LineTraceEnd);
+	}
 }
 
 void UGrabber::Release(void)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Grabber Released"));
 	// TODO: remove/release the physics handle.
+	PhysicsHandle->ReleaseComponent();
 }
 
 FHitResult UGrabber::GetFirstPhysicsBodyInReach(void) const
