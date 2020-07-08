@@ -8,49 +8,36 @@
 
 #define OUT
 
-// Sets default values for this component's properties
 UOpenDoor::UOpenDoor()
-{
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
 
-	// ...
+	PrimaryComponentTick.bCanEverTick = true;
 }
 
-// Called when the game starts
 void UOpenDoor::BeginPlay()
 {
 	Super::BeginPlay();
 	CurrentYaw = InitialYaw = GetOwner()->GetActorRotation().Yaw;
 	OpenAngle += InitialYaw;
 
-	if (PressurePlate == NULL)
+	if (!PressurePlate)
 	{
 		UE_LOG(LogTemp, Error, TEXT("%s has the open door component on it, but no pressurplate set!"), *GetOwner()->GetName())
 	}
-
-	ActorThatOpens = GetWorld()->GetFirstPlayerController()->GetPawn();
 }
 
-// Called every frame
 void UOpenDoor::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-
-	if (PressurePlate != NULL)
+	if (TotalMassOfActors() >= MassToOpenDoors)
 	{
-		if (TotalMassOfActors() >= MassToOpenDoors)
-		{
-			OpenDoor(DeltaTime);
-			DoorLastOpened = GetWorld()->GetTimeSeconds();
-		}
-		else
-		{
-			float TimePassed = GetWorld()->GetTimeSeconds() - DoorLastOpened;
-			if (TimePassed >= DoorCloseDelay)
-				CloseDoor(DeltaTime);
-		}
+		OpenDoor(DeltaTime);
+		DoorLastOpened = GetWorld()->GetTimeSeconds();
+	}
+	else
+	{
+		float TimePassed = GetWorld()->GetTimeSeconds() - DoorLastOpened;
+		if (TimePassed >= DoorCloseDelay)
+			CloseDoor(DeltaTime);
 	}
 }
 
@@ -74,10 +61,16 @@ float UOpenDoor::TotalMassOfActors(void) const
 {
 	float TotalMass = 0.f;
 	TArray<AActor *> OverlappingActors;
+
+	if (!PressurePlate)
+	{
+		return TotalMass;
+	}
+
 	PressurePlate->GetOverlappingActors(OUT OverlappingActors);
 
-	// Make sure generate overlap events enabled on collisions 
-	for (AActor *Actor : OverlappingActors) 
+	// Make sure generate overlap events is enabled on collisions in UE4 engine
+	for (AActor *Actor : OverlappingActors)
 	{
 		TotalMass += Actor->FindComponentByClass<UPrimitiveComponent>()->GetMass();
 	}
