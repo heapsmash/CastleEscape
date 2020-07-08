@@ -13,16 +13,15 @@ class CASTLE_ESCAPE_API UOpenDoor : public UActorComponent
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this component's properties
 	UOpenDoor();
+	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
+
+	void OpenDoor(float DeltaTime);
+	void CloseDoor(float DeltaTime);
+	float TotalMassOfActors(void) const;
 
 protected:
-	// Called when the game starts
 	virtual void BeginPlay() override;
-
-public:
-	// Called every frame
-	virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction) override;
 
 private:
 	float InitialYaw;
@@ -30,7 +29,10 @@ private:
 	float DoorLastOpened = 0.f;
 
 	UPROPERTY(EditAnywhere)
-	float DoorOpenSpeed = .8f; 
+	float MassToOpenDoors = 50.f;
+
+	UPROPERTY(EditAnywhere)
+	float DoorOpenSpeed = .8f;
 
 	UPROPERTY(EditAnywhere)
 	float DoorCloseSpeed = 2.f;
@@ -38,16 +40,12 @@ private:
 	UPROPERTY(EditAnywhere)
 	float OpenAngle = 90.f;
 
-
 	UPROPERTY(EditAnywhere)
-	float DoorCloseDelay = 0.37f; 
+	float DoorCloseDelay = 0.37f;
 
 	UPROPERTY(EditAnywhere)
 	ATriggerVolume *PressurePlate;
 
 	UPROPERTY(EditAnywhere)
 	AActor *ActorThatOpens;
-
-	void OpenDoor(float DeltaTime);
-	void CloseDoor(float DeltaTime); 
 };
